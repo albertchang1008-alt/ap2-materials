@@ -3,4 +3,4 @@
 <title>AP2 互動教材</title>
 <style>:root{--font-scale:1}body{margin:0;padding:32px 24px;font:calc(18px * var(--font-scale))/1.6 system-ui,sans-serif;color:#172d39;background:#fff;overflow-wrap:anywhere}h1{font-size:calc(28px * var(--font-scale));line-height:1.6}</style>
 <main><h1>AP2 互動教材</h1><p>請由課程平台進入</p></main>
-<script>(()=>{const sync=()=>{try{const n=Number(localStorage.getItem('course-font-scale'));document.documentElement.style.setProperty('--font-scale',String(Math.max(1,n||1)))}catch{}};sync();addEventListener('storage',sync)})();</script></html>
+<script>(()=>{const scales={small:1,default:1,large:1.15,xlarge:1.3};const sync=()=>{try{const saved=localStorage.getItem('course-font-scale');const n=Number(scales[saved]??saved);document.documentElement.style.setProperty('--font-scale',String(Math.max(1,n||1)))}catch{}};sync();addEventListener('storage',sync)})();</script></html>

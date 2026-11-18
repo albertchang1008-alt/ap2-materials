@@ -6,7 +6,7 @@ import { realpathSync } from 'node:fs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const IMAGES = /\.(svg|webp|png|jpe?g|gif|avif)$/i;
-const DOCS = new Set(['README.md', 'ATTRIBUTION.md', 'core/README.md']);
+const DOCS = new Set(['README.md', 'ATTRIBUTION.md', 'core/README.md', 'core/shell/README.md']);
 const hash = b => createHash('sha256').update(b).digest('hex');
 async function walk(root, base = '') {
   const out = [];
@@ -45,22 +45,17 @@ export async function check(root = ROOT, limits = {}) {
   for (const f of files) {
     const b = await readFile(path.join(root, f));
     total += (await stat(path.join(root, f))).size;
-    if (b.length > (limits.fileBytes ?? 5 * 1024 * 1024)) fail(`file-size: ${f}`);
+    if (b.length > (limits.fileBytes ?? 5 * 1000 * 1000)) fail(`file-size: ${f}`);
     const ext = path.extname(f).toLowerCase();
     if ((ext === '.md' && !DOCS.has(f)) || /(^|\/)content\.json$/i.test(f) || /教案|來源對照|設計說明|自查|正解/.test(f) || /\.(psd|ai|pdf)$/i.test(f)) fail(`forbidden: ${f}`);
     if (/\.(png|jpe?g)$/i.test(f)) {
       try { if (width(b, ext) > 2400) fail(`image-width: ${f}`); }
       catch (e) { fail(`image-format: ${f}: ${e.message}`); }
     }
-    if (!IMAGES.test(f)) {
-      const s = b.toString('utf8');
-      if ((s.includes('@') && /[A-Z0-9._%+-]{1,64}@[A-Z0-9.-]{1,253}\.[A-Z]{2,}/i.test(s)) || /(?<![A-Za-z0-9])\d{8,}(?![A-Za-z0-9])/.test(s)) fail(`privacy: ${f}`);
-    } else if (ext === '.svg') {
-      const s = b.toString();
-      if ((s.includes('@') && /[A-Z0-9._%+-]{1,64}@[A-Z0-9.-]{1,253}\.[A-Z]{2,}/i.test(s)) || /(?<![A-Za-z0-9])\d{8,}(?![A-Za-z0-9])/.test(s)) fail(`privacy: ${f}`);
-    }
+    const s = f + '\n' + b.toString('utf8');
+    if ((s.includes('@') && /[A-Z0-9._%+-]{1,64}@[A-Z0-9.-]{1,253}\.[A-Z]{2,}/i.test(s)) || /(?<![A-Za-z0-9])\d{8,}(?![A-Za-z0-9])/.test(s)) fail(`privacy: ${f}`);
   }
-  if (total > (limits.totalBytes ?? 800 * 1024 * 1024)) fail('site-size');
+  if (total > (limits.totalBytes ?? 800 * 1000 * 1000)) fail('site-size');
   try {
     const sdk = await readFile(path.join(root, 'course-learning.js'));
     const v = JSON.parse(await readFile(path.join(root, 'sdk-version.json')));

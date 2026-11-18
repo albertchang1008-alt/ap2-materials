@@ -21,6 +21,8 @@ async function material(put) {
   await put('materials.json',JSON.stringify([{slug:'demo'}]));
 }
 test('synthetic material passes',()=>fixture(async(r,p)=>{await material(p);assert.deepEqual((await check(r)).errors,[])}));
+test('shell interface README allowed',()=>fixture(async(r,p)=>{await p('core/shell/README.md','Interface');assert.deepEqual((await check(r)).errors,[])}));
+test('other core docs forbidden',()=>fixture(async(r,p)=>{await p('core/shell/extra.md','');assert.ok((await check(r)).errors.some(x=>x.startsWith('forbidden')))}));
 for (const [name, mutate, reason] of [
   ['missing index',async p=>{await p('demo/a.js','');await p('materials.json','[{"slug":"demo"}]')},'index-missing'],
   ['missing SDK reference',p=>p('demo/index.html','<p>test</p>'),'sdk-reference'],

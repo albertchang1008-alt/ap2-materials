@@ -1,0 +1,16 @@
+{
+  "name": "ap2-materials-shell-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "test": "node --test scripts/test/*.test.mjs",
+    "test:shell": "node --test core/shell/test/*.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
