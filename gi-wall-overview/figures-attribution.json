@@ -1,0 +1,42 @@
+{
+  "figures/openstax-23-16-gastric-pit.webp": {
+    "source": "OpenStax Anatomy and Physiology 2e，openstax-23-16-gastric-pit",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "裁取原圖局部"
+  },
+  "figures/openstax-23-19a-goblet-cell.webp": {
+    "source": "OpenStax Anatomy and Physiology 2e，openstax-23-19a-goblet-cell",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "裁取原圖局部"
+  },
+  "figures/openstax-23-2.jpg": {
+    "source": "OpenStax Anatomy and Physiology 2e，openstax-23-2",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": false
+  },
+  "figures/openstax-23-4.jpg": {
+    "source": "OpenStax Anatomy and Physiology 2e，openstax-23-4",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": false
+  },
+  "figures/openstax-4-8-simple-columnar.webp": {
+    "source": "OpenStax Anatomy and Physiology 2e，openstax-4-8-simple-columnar",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "裁取原圖局部"
+  },
+  "figures/openstax-4-8-stratified-squamous.webp": {
+    "source": "OpenStax Anatomy and Physiology 2e，openstax-4-8-stratified-squamous",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "裁取原圖局部"
+  },
+  "stages/L2/data/assets/openstax-23-3-original.jpg": {
+    "source": "OpenStax，Anatomy and Physiology 2e，23.3，https://openstax.org/books/anatomy-and-physiology-2e/pages/23-1-overview-of-the-digestive-system",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "已修改：標示中文化並加上互動。原始圖檔未修改。"
+  },
+  "stages/L3/data/assets/openstax-23-3-original.jpg": {
+    "source": "OpenStax，Anatomy and Physiology 2e，23.3，https://openstax.org/books/anatomy-and-physiology-2e/pages/23-1-overview-of-the-digestive-system",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "已修改：標示中文化並加上互動。原始圖檔未修改。"
+  }
+}

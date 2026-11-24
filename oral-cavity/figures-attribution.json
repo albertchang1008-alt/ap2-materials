@@ -1,0 +1,27 @@
+{
+  "stages/L1/data/assets/source.png": {
+    "source": "Arcadian（原圖）、TilmannR（向量化），Wikimedia Commons，Illu_mouth.svg，https://commons.wikimedia.org/wiki/File:Illu_mouth.svg",
+    "license": "CC0 1.0（公眾領域貢獻宣告）",
+    "modified": "已刪除文字與引線"
+  },
+  "stages/L2/data/assets/source.png": {
+    "source": "Maksim（原圖）、Mrmw（向量化），Wikimedia Commons，Deciduous_permanent_teeth.svg，https://commons.wikimedia.org/wiki/File:Deciduous_permanent_teeth.svg",
+    "license": "CC BY-SA 4.0",
+    "modified": "已刪除文字與引線"
+  },
+  "stages/L3/data/assets/source.png": {
+    "source": "Jak（依 LadyofHats 原圖），Wikimedia Commons，Tooth_Section_numbered.svg，https://commons.wikimedia.org/wiki/File:Tooth_Section_numbered.svg",
+    "license": "公有領域",
+    "modified": "已刪除文字與引線"
+  },
+  "stages/L4/data/assets/OpenStax-23.8.jpg": {
+    "source": "OpenStax，Anatomy and Physiology 2e，23.8，https://openstax.org/books/anatomy-and-physiology-2e/pages/23-3-the-mouth-pharynx-and-esophagus",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "保留原圖，另有中文疊層及遮罩。"
+  },
+  "stages/L5/data/assets/Salivary_glands_clean_1200.png": {
+    "source": "Goran tek-en、Tom (LT)，Wikimedia Commons，Salivary_glands_numbered.svg，https://commons.wikimedia.org/wiki/File:Salivary_glands_numbered.svg",
+    "license": "CC BY-SA 4.0",
+    "modified": "已刪除文字與引線"
+  }
+}

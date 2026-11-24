@@ -1,0 +1,17 @@
+{
+  "stages/L3/data/assets/OpenStax-23.16.jpg": {
+    "source": "OpenStax，Anatomy and Physiology 2e，23.16，https://openstax.org/books/anatomy-and-physiology-2e/pages/23-4-the-stomach",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "保留原引線，裁切取景並遮除英文標籤"
+  },
+  "stages/openstax-23-15/nav-bilingual.png": {
+    "source": "OpenStax，Anatomy and Physiology 2e，23.15，https://openstax.org/books/anatomy-and-physiology-2e/pages/23-4-the-stomach",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "保留原引線與英文標籤，補中文紅字"
+  },
+  "stages/openstax-23-15/quiz-base.png": {
+    "source": "OpenStax，Anatomy and Physiology 2e，23.15，https://openstax.org/books/anatomy-and-physiology-2e/pages/23-4-the-stomach",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "保留原引線與解剖圖，遮除英文標籤"
+  }
+}

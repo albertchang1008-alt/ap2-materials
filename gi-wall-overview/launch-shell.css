@@ -1,0 +1,116 @@
+#app-view:has(> .launch-frame) { padding: 0; }
+.launch-frame {
+  display: block;
+  width: 100%;
+  height: 400px;
+  border: 0;
+}
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view { padding: 12px; gap: 8px; }
+  #app-view:has(> .launch-frame) { padding: 0; }
+  #app-view .actions-bar { margin-block: 8px; }
+  #app-view .options-list { gap: 5px; }
+  #app-view .btn-option, #app-view .btn-target { padding-block: 4px; min-height: 44px; }
+  #app-view .caption-box { padding: 8px; }
+}
+
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view:has(#btn-start-quiz) > div:first-child { order: -2; }
+  #app-view .match-group { gap: 5px; }
+  #app-view .match-card { padding: 6px; }
+  #app-view .match-stem { margin-bottom: 4px; }
+  #app-view .match-targets { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 4px; }
+  #app-view .match-targets button { padding-inline: 4px; overflow-wrap: anywhere; }
+}
+
+/* 2026-11-21 Claude：導覽頁一屏（圖、圖例、說明、狀態鈕同屏） */
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view .diagram-region.node-figure { padding: 4px; }
+  #app-view .diagram-region.node-figure .diagram-viewport img { max-height: 30vh; width: auto; max-width: 100%; margin-inline: auto; display: block; object-fit: contain; }
+  #app-view .diagram-region.node-figure .diagram-viewport { height: auto !important; }
+  #app-view .legends-container { padding: 6px 10px; }
+  #app-view .legends-container > :first-child:not(.legend-list) { margin-bottom: 2px; font-size: .9em; }
+  #app-view .legend-row { padding-block: 4px; }
+  #app-view .state-tray { order: 1; gap: 6px; }
+  #app-view .state-tray .btn-state { min-height: 48px; padding-block: 4px; }
+  #app-view .state-tray ~ .text-sm.text-muted { order: 2; }
+  #app-view .caption-box { order: 0; }
+}
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view { gap: 6px; }
+  #app-view .diagram-region.node-figure .diagram-viewport img { max-height: 27vh; }
+  #app-view .legend-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 4px; }
+  #app-view .legend-row { padding: 3px 6px; min-height: 0; }
+  #app-view .state-tray { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  #app-view .state-tray .btn-state-wrapper { min-width: 0; }
+  #app-view .state-tray .btn-state { min-height: 44px; padding: 2px 4px; line-height: 1.25; }
+  #app-view .caption-box p { margin: 0; }
+}
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view > div:first-child > p { margin-bottom: 2px; }
+  #app-view .legends-container { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  #app-view .legends-container > :first-child:not(.legend-list) { margin: 0; }
+  #app-view .legends-container .legend-list { flex: 1 1 200px; }
+  #app-view .state-tray .btn-state { font-size: .9em; }
+}
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view .diagram-region.node-figure .diagram-viewport img { max-height: calc(27vh - (var(--font-scale, 1) - 1) * 26vh); }
+}
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view .state-tray .btn-state { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 4px; row-gap: 0; }
+  #app-view .state-tray .btn-state .badge-seen { font-size: .78em; }
+  #app-view .diagram-region.node-figure .diagram-viewport img { max-height: calc(27vh - (var(--font-scale, 1) - 1) * 20vh); }
+}
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view .legends-container > :first-child:not(.legend-list) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #app-view .legend-list { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  #app-view .legend-row { padding: 2px 4px; }
+}
+
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view .state-tray .btn-state,
+  #app-view .state-tray .btn-state .badge-seen,
+  #app-view .state-tray ~ .text-sm.text-muted,
+  #app-view .legends-container .text-sm.text-muted {
+    font-size: calc(18px * var(--font-scale, 1));
+  }
+}
+
+/* Give desktop teaching screens more room to wrap within one viewport. */
+@media (min-width: 1000px) and (max-height: 860px) {
+  #app.app-shell { max-width: 600px; }
+}
+
+/* Clip horizontal paint without creating a scroll container for the sticky action. */
+#app.app-shell:has(#btn-start-quiz) { overflow-x: clip; }
+
+/* The sticky action keeps its own height in the flow below the lesson controls. */
+#app-view > .actions-bar:has(#btn-start-quiz) {
+  order: 3;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin-block: 0;
+  padding-block: 4px;
+  background: #fff;
+  box-shadow: 0 -3px 6px -4px rgba(0, 0, 0, .28);
+}
+
+#app-view .legend-name {
+  min-width: 0;
+  flex-shrink: 1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px), (min-width: 1000px) and (max-height: 860px) {
+  #app-view .legend-list {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(42px + 72px * var(--font-scale, 1))), 1fr));
+  }
+}
+
+#btn-start-quiz[aria-disabled="true"] {
+  color: #334155;
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}

@@ -44,3 +44,32 @@ test('malformed raster fails closed',()=>fixture(async(r,p)=>{await p('x.jpg','i
 test('image missing attribution',()=>fixture(async(r,p)=>{await material(p);await p('demo/x.svg','<svg/>');assert.ok((await check(r)).errors.some(x=>x.startsWith('attribution')))}));
 for (const field of ['source','license','modified']) test(`attribution missing ${field}`,()=>fixture(async(r,p)=>{await material(p);await p('demo/x.svg','<svg/>');const row={source:'Synthetic',license:'Test',modified:false};delete row[field];await p('demo/figures-attribution.json',JSON.stringify({'x.svg':row}));assert.ok((await check(r)).errors.some(x=>x.startsWith('attribution')))}));
 test('symlinks rejected',()=>fixture(async r=>{await symlink('materials.json',path.join(r,'alias'));await assert.rejects(()=>check(r),/symlink/)}));
+
+test('binary PNG payload is excluded but image names are scanned', () => fixture(async (root, put) => {
+  const digits = ['1234', '5678'].join('');
+  await material(put);
+  const bytes = Buffer.concat([png(64), Buffer.from(digits)]);
+  const credit = { source: 'Synthetic', license: 'Test', modified: false };
+  await put('demo/image.png', bytes);
+  await put('demo/figures-attribution.json', JSON.stringify({ 'image.png': credit }));
+  assert.deepEqual((await check(root)).errors, []);
+  await put(`demo/${digits}.png`, bytes);
+  assert.ok((await check(root)).errors.includes(`privacy: demo/${digits}.png`));
+}));
+test('SVG markup and raster-extension text still trigger privacy', () => fixture(async (root, put) => {
+  const digits = ['1234', '5678'].join('');
+  await material(put);
+  await put('demo/image.svg', `<svg><text>${digits}</text></svg>`);
+  await put('demo/fake.webp', digits);
+  const errors = (await check(root)).errors;
+  assert.ok(errors.includes('privacy: demo/image.svg'));
+  assert.ok(errors.includes('privacy: demo/fake.webp'));
+}));
+for (const file of ['demo/_keys/lesson.js', 'demo/corrections-teacher.json', 'demo/teacher-notes.js',
+  'demo/calib/index.html', 'demo/private-tools/review.mjs', 'demo/bank.xlsx', 'demo/D2-L4-corrections.json']) {
+  test(`teacher-only file forbidden: ${file}`, () => fixture(async (root, put) => {
+    await material(put);
+    await put(file, '');
+    assert.ok((await check(root)).errors.includes(`forbidden: ${file}`));
+  }));
+}

@@ -1,0 +1,120 @@
+.acid-level {
+  --ink: #183540; --muted: #3d5a64; --accent: #155e57;
+  --ground: #f6f9f7; --paper: #fff; --wash: #e2efe9; --out: #f4e5da;
+  --acid: #9c2631; --base: #0c6654;
+  color-scheme: light;
+}
+.acid-level * { box-sizing: border-box; }
+.acid-level [hidden] { display: none !important; }
+.acid-level {
+  margin: 0; color: var(--ink);
+  font: calc(18px * var(--font-scale, 1))/1.6 system-ui, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  overflow-wrap: anywhere;
+}
+.acid-level { max-width: 44rem; padding: 12px 14px 28px; margin: auto; }
+.acid-level h1, .acid-level h2, .acid-level p, .acid-level figure, .acid-level dl, .acid-level dd { margin: 0; }
+.acid-level h1, .acid-level h2 { line-height: 1.25; }
+.acid-level h1 { font-size: calc(27px * var(--font-scale, 1)); letter-spacing: -.035em; }
+.acid-level h2 { font-size: calc(21px * var(--font-scale, 1)); }
+.acid-level button, .acid-level summary { font: inherit; font-weight: 680; min-height: 44px; cursor: pointer; }
+.acid-level button { border: 0; color: var(--ink); background: var(--wash); padding: 5px 9px; }
+.acid-level button:focus-visible, .acid-level summary:focus-visible { outline: 3px solid #a44f11; outline-offset: 2px; }
+.acid-level button:disabled { opacity: 1; background: #e8eeee; color: #465c64; cursor: default; }
+.acid-level .acid, .acid-level .base { font-weight: 760; }
+.acid-level .acid { color: var(--acid); }
+.acid-level .base { color: var(--base); }
+.acid-level .tips { margin-top: 4px; color: var(--muted); }
+.acid-level .chip { display: block; }
+.acid-level .steps {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
+  margin: 8px 0;
+}
+.acid-level .steps button[aria-pressed="true"], .acid-level .primary, .acid-level .flip { color: #fff; background: var(--accent); }
+.acid-level .diagram { background: var(--paper); margin: 0 auto 6px; width: min(100%, 410px); }
+.acid-level .diagram svg, .acid-level .zoom-frame svg { display: block; width: 100%; height: auto; }
+.acid-level .ledger { background: var(--wash); padding: 7px 10px 8px; }
+.acid-level .ledger h2 { margin: 0 0 4px; }
+.acid-level .ledger-row {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px;
+  padding: 3px 0;
+}
+.acid-level .ledger-row + .ledger-row { border-top: 1px solid #9ebbb1; }
+.acid-level .ledger-row dt { background: #c9e3d6; font-weight: 690; align-self: start; padding: 0 4px; }
+.acid-level .ledger-row.outgoing dt { background: var(--out); }
+.acid-level .ledger-row dd strong { margin-inline-end: .45em; }
+.acid-level .ledger-row dd span { color: var(--ink); }
+.acid-level summary {
+  padding: 7px 1px; color: var(--accent);
+  list-style-position: inside;
+}
+.acid-level .plain, .acid-level .src { padding: 9px 12px; background: var(--paper); }
+.acid-level .src { color: var(--muted); }
+.acid-level .actions, .acid-level .pages { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; }
+.acid-level .recall > h2 { margin-bottom: 12px; }
+.acid-level .flash { background: var(--paper); border-top: 5px solid var(--accent); padding: 13px; }
+.acid-level .position { color: var(--muted); font-weight: 650; margin-bottom: 4px; }
+.acid-level .flash figure { background: var(--wash); padding: 8px 12px; margin: 8px 0; }
+.acid-level .cue { display: flex; align-items: center; gap: 10px; }
+.acid-level .cue b { font-size: calc(22px * var(--font-scale, 1)); }
+.acid-level .symbol { display: block; width: 40px; height: 40px; flex: none; }
+.acid-level .flash figcaption { margin-top: 3px; }
+.acid-level .flip { width: 100%; }
+.acid-level .reply { margin-top: 10px; }
+.acid-level .reply .plain, .acid-level .reply .src { padding-inline: 0; }
+.acid-level .back { margin-top: 8px; width: 100%; }
+.acid-level dialog {
+  box-sizing: border-box; width: min(720px, calc(100% - 20px)); max-width: none;
+  max-height: min(90dvh, 920px); padding: 12px; border: none;
+  background: var(--paper); color: var(--ink);
+}
+.acid-level dialog::backdrop { background: #183540bb; }
+.acid-level .zoom-head { display: flex; align-items: start; justify-content: space-between; gap: 8px; }
+.acid-level .zoom-head button { flex: none; }
+.acid-level .zoom-help { margin: 6px 0; }
+.acid-level .zoom-frame { overflow: auto; background: #fff; }
+.acid-level .zoom-frame svg { width: max(100%, calc(510px * var(--font-scale, 1))); max-width: none; }
+.acid-level .zoom-frame svg text { fill: #183540; }
+@media (min-width: 760px) {
+  .acid-level { padding-block: 24px; }
+  .acid-level .ledger { padding-inline: 14px; }
+}
+
+.acid-level { background: var(--ground); }
+.acid-level .tips { margin: 0; }
+.acid-level .standalone-title { display: none; }
+#acid-app > .acid-level .standalone-title { display: block; margin-bottom: 4px; }
+.acid-level .diagram { width: min(100%, calc(344px * var(--font-scale, 1))); }
+
+/* At phone width, keep the study SVG at or above its 360-unit viewBox so that 12-unit labels render at 12 CSS px. */
+@media (min-width: 390px) and (max-width: 480px) {
+  /* Reclaim 2px on each side of the shell gutter for the 360px SVG.
+     Compensating padding keeps the lesson controls and text aligned. */
+  #app-view > .acid-level {
+    margin-inline: -2px;
+    padding-inline: 16px;
+  }
+  .acid-level #lesson .diagram {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max(360px, min(100%, calc(344px * var(--font-scale, 1))));
+    margin-inline: 0;
+  }
+}
+.acid-level .steps { margin: 4px 0 6px; }
+.acid-level .steps button { padding-inline: 4px; }
+.acid-level .teacher-note { margin-top: 4px; border-top: 1px solid #9ebbb1; padding-top: 4px; }
+.acid-level .reply .plain { background: transparent; }
+.acid-level .quiz-diagram { width: min(100%, calc(164px * var(--font-scale, 1))); }
+.acid-level .quiz-prompt { margin: 8px 0; }
+.acid-level .quiz-order { margin: 4px 0; padding-inline-start: 27px; }
+.acid-level .quiz-order:empty { display: none; }
+.acid-level .quiz-options,
+.acid-level .quiz-actions { display: grid; gap: 4px; }
+.acid-level .quiz-actions { margin-top: 6px; }
+.acid-level .quiz-options button { width: 100%; text-align: start; }
+.acid-level .quiz-options button[aria-pressed="true"] { color: white; background: var(--accent); }
+.acid-level .quiz-feedback { background: var(--paper); padding: 4px 8px; }
+.acid-level .completion { min-height: 50vh; display: grid; align-content: center; gap: 12px; }
+.acid-level .zoom-frame svg { font-family: inherit; }
+.acid-level .zoom-frame { max-height: 65dvh; }

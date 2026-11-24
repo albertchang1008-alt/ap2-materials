@@ -746,4 +746,7 @@
 .text-sm, .text-xs, .gate-notice, .feedback-box, .caption-box { line-height: 1.6; }
 .title-stem { font-size: calc(21px * var(--font-scale, 1)); }
 .badge-lock { font-size: calc(18px * var(--font-scale, 1)); }
+.btn-target:disabled { color: #334155; }
+.btn-target.active:disabled { color: white; }
+img[data-assessment-figure] { display: block; width: 100%; height: auto; }
 .btn:disabled, .btn-state:disabled, .btn-state.gate-locked, .btn.gate-locked { opacity: 1; }

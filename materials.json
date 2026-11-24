@@ -1,1 +1,46 @@
-[]
+[
+  {
+    "slug": "gi-wall-overview",
+    "title": "消化系統總覽與消化管壁",
+    "nodeTotal": 24,
+    "questionTotal": 39,
+    "materialVersion": "gi-wall-overview-ag2",
+    "figures": [
+      "CC BY-NC-SA 4.0"
+    ]
+  },
+  {
+    "slug": "oral-cavity",
+    "title": "口腔、唾液腺與牙齒",
+    "nodeTotal": 21,
+    "questionTotal": 36,
+    "materialVersion": "oral-cavity-ag2",
+    "figures": [
+      "CC BY-NC-SA 4.0",
+      "CC BY-SA 4.0",
+      "CC0 1.0（公眾領域貢獻宣告）",
+      "公有領域"
+    ]
+  },
+  {
+    "slug": "swallowing-esophagus",
+    "title": "咽、吞嚥與食道",
+    "nodeTotal": 20,
+    "questionTotal": 34,
+    "materialVersion": "swallowing-esophagus-ag2",
+    "figures": [
+      "CC BY-NC-SA 4.0",
+      "公有領域"
+    ]
+  },
+  {
+    "slug": "stomach",
+    "title": "胃：構造、胃液分泌與排空",
+    "nodeTotal": 32,
+    "questionTotal": 37,
+    "materialVersion": "stomach-ag2",
+    "figures": [
+      "CC BY-NC-SA 4.0"
+    ]
+  }
+]

@@ -4,32 +4,52 @@
 /* Shared adapter installed by shell.js; this file is not shipped as a separate dependency. */
 function installFigureLevels(App) {
   let active = null;
+  const skipped = new Set();
   const scaleMap = { small: 1, default: 1, large: 1.15, xlarge: 1.3 };
-  const scaleValue = value => Math.max(1, Number(scaleMap[value] ?? value) || 1);
-  const currentScale = () => scaleValue(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'));
+  const scaleValue = value => {
+    const scale = Number(Object.hasOwn(scaleMap, value) ? scaleMap[value] : value);
+    return Number.isFinite(scale) ? Math.max(1, scale) : 1;
+  };
+  const root = document.documentElement;
+  const currentScale = () => scaleValue(getComputedStyle(root).getPropertyValue('--font-scale'));
+  let parentScale = false;
+  const applyScale = value => root.style.setProperty('--font-scale', String(scaleValue(value)));
   const syncStorage = () => {
+    if (parentScale) return;
     try {
-      const v = localStorage.getItem('course-font-scale');
-      if (v !== null) document.documentElement.style.setProperty('--font-scale', String(scaleValue(v)));
+      const value = localStorage.getItem('course-font-scale');
+      if (value !== null) applyScale(value);
     } catch { /* Sandboxed documents may disable localStorage. */ }
   };
   syncStorage();
-  addEventListener('storage', event => { if (event.key === 'course-font-scale' || event.key === null) syncStorage(); });
+  addEventListener('storage', event => {
+    if (event.key === 'course-font-scale' || event.key === null) syncStorage();
+  });
+  addEventListener('message', event => {
+    if (parent === window || event.source !== parent) return;
+    const data = event.data;
+    let value;
+    if (data?.type === 'course-font-scale') value = data.scale;
+    else if (data?.type === 'display-prefs' && data.protocolVersion === 1) value = data.fontScale;
+    else return;
+    const valid = typeof value === 'string' ? Object.hasOwn(scaleMap, value) : [1, 1.15, 1.3].includes(value);
+    if (!valid) return;
+    parentScale = true;
+    applyScale(value);
+  });
   new MutationObserver(() => {
-    const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--font-scale'));
-    if (raw < 1) document.documentElement.style.setProperty('--font-scale', '1');
+    if (parseFloat(getComputedStyle(root).getPropertyValue('--font-scale')) < 1) applyScale(1);
     const fontScale = currentScale();
-    if (fontScale < 1) return;
-    if (active && active.fontScale !== fontScale) {
+    if (active?.core && active.fontScale !== fontScale) {
       active.fontScale = fontScale;
       active.core.setFontScale(fontScale);
     }
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+  }).observe(root, { attributes: true, attributeFilter: ['style', 'class'] });
   const dispose = () => {
     if (!active) return;
     const previous = active;
-    active = null; // Invalidate asynchronous onPass/events before core cleanup.
-    previous.core.unmount();
+    active = null;
+    previous.core?.unmount();
     App.trackTime(null);
   };
   const render = App.render;
@@ -38,46 +58,159 @@ function installFigureLevels(App) {
     if (active && (this.state.phase !== 'TEACH' || active.level !== level)) dispose();
     return render.call(this);
   };
+  const startLevel = App.startLevel;
+  App.startLevel = function(idx) {
+    dispose();
+    return startLevel.call(this, idx);
+  };
+  const showComplete = App.renderComplete;
+  App.renderComplete = function(view) {
+    if (!skipped.size) return showComplete.call(this, view);
+    this.trackTime(null);
+    view.innerHTML = '<div class="caption-box"><p class="text-body">評量已完成。略過的關卡還沒有通過，請通知老師。</p></div>';
+  };
   const teach = App.renderTeach;
   App.renderTeach = function(view, level) {
     if (level.kind !== 'figure') return teach.call(this, view, level);
     if (active?.level === level) return;
     view.replaceChildren();
     const core = window.FigureLevel;
-    if (!core || !['mount','setFontScale','unmount'].every(k => typeof core[k] === 'function')) {
-      throw new Error('FigureLevel mount/setFontScale/unmount required');
-    }
-    if (!level.figure?.lesson || !level.figure?.stage) throw new Error('figure.lesson and figure.stage required');
-    const token = { level, core, fontScale: currentScale() };
+    const token = { level, core: null, fontScale: currentScale() };
     active = token;
     const prefix = this.data.slug;
-    const questionPrefix = `${prefix}-level-${this.state.levelIdx + 1}-`;
+    // L2 retains the published shape "level-2" after any insertion or reorder.
+    const questionPrefix = `${prefix}-level-${level.id.replace(/^L(?=\d+$)/, '')}-`;
     const nodePrefix = `${prefix}-node-${level.id}-`;
     const local = id => {
       if (typeof id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(id)) throw new Error('local tracking suffix required');
       return id;
     };
+    const sdk = window.CourseLearning;
     const events = Object.freeze({
       explore: id => {
         if (active !== token) return;
         const nodeId = nodePrefix + local(id);
-        window.CourseLearning.explore(nodeId);
+        sdk.explore(nodeId);
         this.trackTime(nodeId);
       },
-      answer: (id, correct) => { if (active === token) window.CourseLearning.answer(questionPrefix + local(id), !!correct); },
-      hint: id => { if (active === token) window.CourseLearning.hint(questionPrefix + local(id)); },
-      nodeTime: (id, seconds) => { if (active === token) window.CourseLearning.nodeTime(nodePrefix + local(id), seconds); }
+      resumeExplore: id => {
+        if (active !== token) return;
+        const nodeId = nodePrefix + local(id);
+        if (this.state.currentNodeId !== nodeId) this.trackTime(nodeId);
+      },
+      endExplore: () => { if (active === token) this.trackTime(null); },
+      answer: (id, correct) => { if (active === token) sdk.answer(questionPrefix + local(id), !!correct); },
+      hint: id => { if (active === token) sdk.hint(questionPrefix + local(id)); },
+      nodeTime: (id, seconds) => { if (active === token) sdk.nodeTime(nodePrefix + local(id), seconds); },
+      findError: (id, choice, detail) => {
+        if (active === token) sdk.findError?.(questionPrefix + local(id), local(choice), detail);
+      }
     });
+    const onError = () => {
+      if (active !== token) return;
+      dispose();
+      active = { level };
+      view.innerHTML = `
+        <div class="caption-box" role="alert">
+          <p class="text-body">這一關暫時無法載入，請通知老師。</p>
+        </div>
+        <div class="actions-bar">
+          <button type="button" class="btn btn-primary btn-block" id="btn-retry-figure">重新載入</button>
+          <button type="button" class="btn btn-block" id="btn-skip-figure">略過這一關</button>
+        </div>`;
+      view.querySelector('#btn-retry-figure').onclick = () => {
+        dispose();
+        this.render();
+      };
+      view.querySelector('#btn-skip-figure').onclick = () => {
+        skipped.add(level.id);
+        this.advanceLevel();
+      };
+    };
     try {
+      if (!core || !['mount', 'setFontScale', 'unmount'].every(key => typeof core[key] === 'function')
+          || !level.figure?.lesson || !level.figure?.stage) {
+        onError();
+        return;
+      }
+      token.core = core;
       core.mount(view, {
         lesson: level.figure.lesson, stage: level.figure.stage,
-        fontScale: token.fontScale, events, trackingPrefix: prefix,
+        fontScale: token.fontScale, events, trackingPrefix: prefix, onError,
         onPass: () => {
           if (active !== token || this.state.phase !== 'TEACH' || this.data.levels[this.state.levelIdx] !== level) return;
+          skipped.delete(level.id);
           this.setPhase('LEVEL_PASS');
         }
       });
-    } catch (error) { dispose(); throw error; }
+    } catch { onError(); }
+  };
+}
+
+// D1 retains the source's numbered questions and needs their matching artwork.
+function installRequiredFigures(App) {
+  if (!App.data.assessment?.requireFigures) return;
+  const startTimer = App.startAssTimer;
+  let pendingTimer;
+  const showFigure = (view, q, assessment = false) => {
+    if (!q?.quizFigure?.img) return;
+    const region = view.querySelector('.node-figure') || document.createElement('div');
+    if (!region.parentElement) {
+      region.className = 'diagram-region node-figure';
+      view.querySelector('.title-stem').parentElement.after(region);
+    }
+    const image = region.querySelector('img') || document.createElement('img');
+    image.alt = '作答用圖';
+    const buttons = [...view.querySelectorAll('button')];
+    const enabled = buttons.filter(button => !button.disabled);
+    const failed = () => {
+      if (!image.isConnected) return;
+      if (assessment) clearInterval(App.state.assTimer);
+      const notice = document.createElement('p');
+      notice.className = 'text-body';
+      notice.setAttribute('role', 'alert');
+      notice.textContent = '作答用圖暫時無法載入，請通知老師。';
+      region.replaceChildren(notice);
+    };
+    const loaded = () => {
+      for (const button of enabled) button.disabled = false;
+      if (assessment && pendingTimer === q && image.isConnected) {
+        pendingTimer = null;
+        startTimer.call(App);
+      }
+    };
+    if (!image.parentElement) region.append(image);
+    if (assessment) image.dataset.assessmentFigure = '';
+    if (!image.hasAttribute('src')) image.src = q.quizFigure.img;
+    if (image.complete && image.naturalWidth > 0) {
+      loaded();
+      return;
+    }
+    for (const button of buttons) button.disabled = true;
+    if (image.complete) failed();
+    else {
+      image.addEventListener('load', loaded, { once: true });
+      image.addEventListener('error', failed, { once: true });
+    }
+  };
+  const quiz = App.renderQuiz;
+  App.renderQuiz = function(view, level) {
+    const result = quiz.call(this, view, level);
+    showFigure(view, level.questions[this.state.questionIdx]);
+    return result;
+  };
+  const assessment = App.renderAssessment;
+  App.renderAssessment = function(view, q) {
+    assessment.call(this, view, q);
+    showFigure(view, q, true);
+  };
+  App.startAssTimer = function() {
+    const question = this.data.assessment[this.state.assStage][this.state.assIdx];
+    if (!question?.quizFigure?.img || document.querySelector('[data-assessment-figure]')?.naturalWidth) {
+      pendingTimer = null;
+      return startTimer.call(this);
+    }
+    pendingTimer = question;
   };
 }
 
@@ -1507,6 +1640,8 @@ function installFigureLevels(App) {
         this.state.questionIdx++;
         this.state.quizAnswerLocked = false;
         this.state.feedback = null;
+        this.state.selectedOptId = null;
+        this.state.selectedTfVal = null;
         this.state.quizSubStateIdx = 0;
         this.state.matchAnswers = {};
         this.state.matchLockedRows = new Set();
@@ -1543,26 +1678,28 @@ function installFigureLevels(App) {
           </div>
         `;
 
-        document.getElementById('btn-next-level').onclick = () => {
-          if (this.state.levelIdx + 1 < this.data.levels.length) {
-            this.startLevel(this.state.levelIdx + 1);
+        document.getElementById('btn-next-level').onclick = () => this.advanceLevel();
+      },
+
+      advanceLevel() {
+        if (this.state.levelIdx + 1 < this.data.levels.length) {
+          this.startLevel(this.state.levelIdx + 1);
+        } else {
+          // All levels finished, proceed to ending or truefalse
+          if (this.data.ending && this.data.ending.steps && this.data.ending.steps.length > 0) {
+            this.state.endingStepIdx = 0;
+            this.state.quizAnswerLocked = false;
+            this.state.feedback = null;
+            this.setPhase('ENDING');
+          } else if (this.data.truefalse && this.data.truefalse.length > 0) {
+            this.state.tfIdx = 0;
+            this.state.quizAnswerLocked = false;
+            this.state.feedback = null;
+            this.setPhase('TRUEFALSE');
           } else {
-            // All levels finished, proceed to ending or truefalse
-            if (this.data.ending && this.data.ending.steps && this.data.ending.steps.length > 0) {
-              this.state.endingStepIdx = 0;
-              this.state.quizAnswerLocked = false;
-              this.state.feedback = null;
-              this.setPhase('ENDING');
-            } else if (this.data.truefalse && this.data.truefalse.length > 0) {
-              this.state.tfIdx = 0;
-              this.state.quizAnswerLocked = false;
-              this.state.feedback = null;
-              this.setPhase('TRUEFALSE');
-            } else {
-              this.startAssessment('foundation');
-            }
+            this.startAssessment('foundation');
           }
-        };
+        }
       },
 
       renderEnding(view) {
@@ -1985,7 +2122,10 @@ function installFigureLevels(App) {
 
       renderComplete(view) {
         this.trackTime(null);
-        window.CourseLearning.complete();
+        if (!this.state.reportedComplete) {
+          window.CourseLearning.complete();
+          this.state.reportedComplete = true;
+        }
 
         view.innerHTML = `
           <div style="margin-top: 32px; text-align: center;">
@@ -2015,6 +2155,7 @@ function installFigureLevels(App) {
 
 
     installFigureLevels(App);
+    installRequiredFigures(App);
     window.App = App;
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { App.clearActiveReading(); App.render(); }

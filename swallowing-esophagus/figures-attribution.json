@@ -1,0 +1,12 @@
+{
+  "stages/L1/data/assets/source.png": {
+    "source": "Arcadian（原圖）、Ripounet（向量化），Wikimedia Commons，Illu_pharynx.svg，https://commons.wikimedia.org/wiki/File:Illu_pharynx.svg",
+    "license": "公有領域",
+    "modified": "已刪除文字與引線"
+  },
+  "stages/L2/data/assets/OpenStax-22.4.jpg": {
+    "source": "OpenStax，Anatomy and Physiology 2e，22.4，https://openstax.org/books/anatomy-and-physiology-2e/pages/22-1-organs-and-structures-of-the-respiratory-system",
+    "license": "CC BY-NC-SA 4.0",
+    "modified": "保留原圖，另有中文疊層及遮罩。"
+  }
+}

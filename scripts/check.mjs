@@ -6,6 +6,9 @@ import { realpathSync } from 'node:fs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const IMAGES = /\.(svg|webp|png|jpe?g|gif|avif)$/i;
+const PRIVATE_PATH = /(?:^|\/)(?:\.local-review|_keys|calib|calibration|private-preview|private-tools|校正圖|私有工具)(?:[./]|$)|(?:^|\/)(?:[^/]+[-_])?(?:answer[-_]?keys?|teacher[-_]?notes?|corrections|teacher_review_by_figure)(?:[-_][^/.]+)?\.[^/]+$|\.(xlsx?|xlsm|ods)$/i;
+const EMAIL = /[A-Z0-9._%+-]{1,64}@[A-Z0-9.-]{1,253}\.[A-Z]{2,}/i;
+const LONG_NUMBER = /(?<![A-Za-z0-9])\d{8,}(?![A-Za-z0-9])/;
 const DOCS = new Set(['README.md', 'ATTRIBUTION.md', 'core/README.md', 'core/shell/README.md']);
 const hash = b => createHash('sha256').update(b).digest('hex');
 async function walk(root, base = '') {
@@ -38,6 +41,23 @@ function width(bytes, ext) {
   }
   throw Error('JPEG dimensions missing');
 }
+function isBinaryImage(bytes, ext) {
+  switch (ext) {
+    case '.jpg':
+    case '.jpeg':
+      return bytes[0] === 0xff && bytes[1] === 0xd8;
+    case '.png':
+      return bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a';
+    case '.gif':
+      return ['GIF87a', 'GIF89a'].includes(bytes.toString('ascii', 0, 6));
+    case '.webp':
+      return bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
+    case '.avif':
+      return bytes.toString('ascii', 4, 8) === 'ftyp' && ['avif', 'avis'].includes(bytes.toString('ascii', 8, 12));
+    default:
+      return false;
+  }
+}
 export async function check(root = ROOT, limits = {}) {
   const errors = [], fail = s => errors.push(s);
   const files = await walk(root);
@@ -47,13 +67,14 @@ export async function check(root = ROOT, limits = {}) {
     total += (await stat(path.join(root, f))).size;
     if (b.length > (limits.fileBytes ?? 5 * 1000 * 1000)) fail(`file-size: ${f}`);
     const ext = path.extname(f).toLowerCase();
-    if ((ext === '.md' && !DOCS.has(f)) || /(^|\/)content\.json$/i.test(f) || /教案|來源對照|設計說明|自查|正解/.test(f) || /\.(psd|ai|pdf)$/i.test(f)) fail(`forbidden: ${f}`);
+    if (PRIVATE_PATH.test(f) || (ext === '.md' && !DOCS.has(f)) || /(^|\/)content\.json$/i.test(f) || /教案|來源對照|設計說明|自查|正解/.test(f) || /\.(psd|ai|pdf)$/i.test(f)) fail(`forbidden: ${f}`);
     if (/\.(png|jpe?g)$/i.test(f)) {
       try { if (width(b, ext) > 2400) fail(`image-width: ${f}`); }
       catch (e) { fail(`image-format: ${f}: ${e.message}`); }
     }
-    const s = f + '\n' + b.toString('utf8');
-    if ((s.includes('@') && /[A-Z0-9._%+-]{1,64}@[A-Z0-9.-]{1,253}\.[A-Z]{2,}/i.test(s)) || /(?<![A-Za-z0-9])\d{8,}(?![A-Za-z0-9])/.test(s)) fail(`privacy: ${f}`);
+    // Scan names for every file. Binary pixels and metadata are not text payloads.
+    const text = isBinaryImage(b, ext) ? f : f + '\n' + b.toString('utf8');
+    if (EMAIL.test(text) || LONG_NUMBER.test(text)) fail(`privacy: ${f}`);
   }
   if (total > (limits.totalBytes ?? 800 * 1000 * 1000)) fail('site-size');
   try {

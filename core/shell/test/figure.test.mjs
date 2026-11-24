@@ -77,27 +77,52 @@ test('initial platform xlarge, live storage and CSS scale, never shrink',()=>fix
   await page.clock.runFor(10);
   assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--font-scale')),'1');
 },{scale:1.3}));
-test('missing figure core fails closed',()=>fixture(async({page,click})=>{
+test('missing core shows a readable error; skip retains shell progression',()=>fixture(async({page,click})=>{
   await page.evaluate(()=>window.FigureLevel=null);
-  // Suppress only this intentionally triggered browser error and inspect it explicitly.
-  const result=await page.evaluate(()=>{try{App.startLevel(0);return ''}catch(e){return e.message}});
-  assert.match(result,/FigureLevel/);
+  await click('#btn-start');
+  assert.equal(await page.locator('[role=alert]').count(),1);
+  assert.deepEqual(await accessibility(page),[]);
   assert.equal(await page.locator('#btn-next-level').count(),0);
+  await click('#btn-skip-figure');
+  assert.equal(await page.evaluate(()=>App.state.levelIdx),1);
+  assert.equal(await page.locator('[role=alert]').count(),1);
+  await page.evaluate(()=>App.setPhase('COMPLETE'));
+  assert.equal(await page.evaluate(()=>__events.some(event=>event.type==='complete')),false);
 }));
-test('missing figure metadata and core mount exceptions fail closed',()=>fixture(async({page,click})=>{
-  const result=await page.evaluate(()=>{
-    const level=App.data.levels[0],keep=level.figure;
+test('metadata failure and mount failure can both be retried',()=>fixture(async({page,click})=>{
+  await page.evaluate(()=>{
+    const level=App.data.levels[0];
+    window.__figure=level.figure;
     level.figure={lesson:'test'};
-    let metadata='';try{App.startLevel(0)}catch(e){metadata=e.message}
-    level.figure=keep;
-    window.FigureLevel.mount=()=>{throw Error('synthetic load error')};
-    let loading='';try{App.startLevel(0)}catch(e){loading=e.message}
-    return {metadata,loading,unmounts:__calls.filter(c=>c[0]==='unmount').length};
   });
-  assert.match(result.metadata,/figure.lesson and figure.stage/);
-  assert.equal(result.loading,'synthetic load error');
-  assert.equal(result.unmounts,1);
-  assert.equal(await page.locator('#btn-next-level').count(),0);
+  await click('#btn-start');
+  assert.equal(await page.locator('[role=alert]').count(),1);
+  await page.evaluate(()=>{
+    App.data.levels[0].figure=__figure;
+    window.__mount=FigureLevel.mount;
+    FigureLevel.mount=()=>{throw Error('synthetic load error')};
+  });
+  await click('#btn-retry-figure');
+  assert.equal(await page.locator('[role=alert]').count(),1);
+  assert.equal(await page.evaluate(()=>__calls.filter(c=>c[0]==='unmount').length),1);
+  await page.evaluate(()=>FigureLevel.mount=__mount);
+  await click('#btn-retry-figure');
+  await click('#btn-figure-pass');
+  assert.equal(await page.evaluate(()=>App.state.phase),'LEVEL_PASS');
+}));
+test('figure IDs use level.id across insertions; findError forwarded only if supported',()=>fixture(async({page,click})=>{
+  await page.evaluate(()=>App.data.levels.unshift({id:'L9',states:[]}));
+  await page.evaluate(()=>App.startLevel(1));
+  await page.evaluate(()=>{
+    __configs[0].events.findError('1','choice',{mode:'single',position:1});
+    CourseLearning.findError=(...args)=>__events.push({type:'findError',args});
+    __configs[0].events.findError('1','choice',{mode:'single',position:1});
+  });
+  await click('#btn-figure-pass');
+  assert.deepEqual(await page.evaluate(()=>__events.filter(e=>['findError','answer'].includes(e.type))),[
+    {type:'findError',args:['shell-demo-level-1-1','choice',{mode:'single',position:1}]},
+    {type:'answer',args:['shell-demo-level-1-1',true]}
+  ]);
 }));
 test('unmount on leaving, old core callbacks cannot pass revisited level',()=>fixture(async({page,click})=>{
   await click('#btn-start');
@@ -109,3 +134,62 @@ test('unmount on leaving, old core callbacks cannot pass revisited level',()=>fi
   await click('#btn-figure-pass');
   assert.equal(await page.evaluate(()=>App.state.phase),'LEVEL_PASS');
 }));
+
+test('cross-origin platform preference applies before mount and updates without remount',()=>harness(async({base,browser,put})=>{
+  await put('demo/index.html',thinIndex({stub:true}));
+  await put('demo/lesson-data.js',`window.MaterialShellContent=${JSON.stringify(content)}`);
+  await put('platform.html',`<iframe src="${base}/demo/index.html"></iframe>`);
+  const {page,context}=await setupPage(browser);
+  try {
+    await page.goto(`${base.replace('127.0.0.1','localhost')}/platform.html`);
+    const frame=page.frames()[1];
+    await frame.waitForSelector('#btn-start');
+    const post=scale=>page.evaluate(({scale,base})=>document.querySelector('iframe').contentWindow
+      .postMessage({type:'course-font-scale',scale},base),{scale,base});
+    await post('xlarge');
+    await frame.locator('html[style*="1.3"]').waitFor({state:'attached'});
+    await frame.click('#btn-start',{force:true});
+    assert.equal(await frame.locator('#app-view').getAttribute('data-font-scale'),'1.3');
+    await post('large');
+    await frame.locator('#app-view[data-font-scale="1.15"]').waitFor({state:'attached'});
+    await post(1000);
+    await frame.evaluate(()=>window.postMessage({type:'course-font-scale',scale:'small'},location.origin));
+    await frame.evaluate(()=>new Promise(resolve=>{const channel=new MessageChannel();channel.port1.onmessage=resolve;channel.port2.postMessage('flush')}));
+    assert.equal(await frame.locator('#app-view').getAttribute('data-font-scale'),'1.15');
+  } finally { await context.close(); }
+}));
+
+test('published display-prefs supplies font size to an opaque-origin lesson', () =>
+  harness(async ({ base, browser, put }) => {
+    await put('demo/index.html', thinIndex({ stub: true }));
+    await put('demo/lesson-data.js', `window.MaterialShellContent = ${JSON.stringify(content)};`);
+    await put('platform.html', '<iframe sandbox="allow-scripts" src="/demo/index.html"></iframe>');
+    const page = await browser.newPage();
+    page.setDefaultTimeout(3000);
+    try {
+      await page.goto(`${base}/platform.html`);
+      const frame = await page.locator('iframe').elementHandle().then(el => el.contentFrame());
+      await frame.locator('#btn-start').waitFor();
+      assert.equal(await frame.evaluate(() => self.origin), 'null');
+      const post = (version, scale) => page.evaluate(({ version, scale }) => {
+        document.querySelector('iframe').contentWindow.postMessage({
+          type: 'display-prefs', protocolVersion: version, fontScale: scale,
+        }, '*');
+      }, { version, scale });
+      await post(1, 1.3);
+      await frame.locator('html[style*="1.3"]').waitFor({ state: 'attached' });
+      await frame.locator('#btn-start').click();
+      assert.equal(await frame.locator('#app-view').getAttribute('data-font-scale'), '1.3');
+      await post(1, 1.15);
+      await frame.locator('#app-view[data-font-scale="1.15"]').waitFor({ state: 'attached' });
+      await post(2, 1.3);
+      await frame.evaluate(() => new Promise(resolve => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = resolve;
+        channel.port2.postMessage('flush');
+      }));
+      assert.equal(await frame.locator('#app-view').getAttribute('data-font-scale'), '1.15');
+    } finally {
+      await page.close();
+    }
+  }));

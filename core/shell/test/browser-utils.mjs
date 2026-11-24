@@ -21,7 +21,7 @@ export function thinIndex({stub = false} = {}) {
 }
 export async function harness(fn) {
   const root = await mkdtemp(path.join(tmpdir(),'ap2-shell-'));
-  const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
+  const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.json':'application/json'};
   const server = createServer(async(req,res)=>{
     try {
       const f = path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
@@ -36,7 +36,7 @@ export async function harness(fn) {
     await cp(shellRoot,path.join(root,'core/shell'),{recursive:true});
     await cp(path.join(siteRoot,'course-learning.js'),path.join(root,'course-learning.js'));
     await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
-    browser = await chromium.launch({headless:true});
+    browser = await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined});
     const base = `http://127.0.0.1:${server.address().port}`;
     const put = async(f,text)=>{await mkdir(path.dirname(path.join(root,f)),{recursive:true});await writeFile(path.join(root,f),text)};
     await fn({root,base,browser,put});
@@ -77,7 +77,7 @@ export async function accessibility(page) {
       if(!e.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})||!e.getBoundingClientRect().height)continue;
       const label=[...e.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join('').trim();
       if(!label||e.closest('svg,script,style'))continue;
-      const s=getComputedStyle(e), size=parseFloat(s.fontSize), line=parseFloat(s.lineHeight), button=!!e.closest('button'), stem=e.classList.contains('title-stem');
+      const s=getComputedStyle(e), size=parseFloat(s.fontSize), line=parseFloat(s.lineHeight), button=!!e.closest('button'), stem=e.classList.contains('title-stem')||e.matches('.ap2-figure .prompt');
       const heading=/^H[1-6]$/.test(e.tagName);
       const minimum=stem?19:heading?21:18;
       const id=e.id||e.className||e.tagName;
