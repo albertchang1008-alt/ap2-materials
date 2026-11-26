@@ -122,3 +122,7 @@
 /* 回想卡門檻引導（2026-11-26）：鎖住時說明原因，黃框指出下一步 */
 .acid-level .recall-gate { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fffbeb; color: #92400e; font-weight: 700; }
 .acid-level .gate-target { outline: 3px solid #f59e0b; outline-offset: 2px; box-shadow: 0 0 0 6px rgba(245, 158, 11, .25); }
+
+/* 2026-11-27 教師：看圖練習的細胞圖在作答時離子層全隱藏、只剩空框，手機上又固定在頂端擋住題目與選項；作答時不顯示細胞圖與「放大細胞圖」。 */
+.acid-level #acid-quiz .quiz-diagram,
+.acid-level #acid-quiz #quiz-zoom { display: none !important; }

@@ -10,7 +10,7 @@ window.MECHANISM_LESSON_DATA = {
           "fullId": "stomach-level-4-1",
           "level": 3,
           "mode": "order",
-          "prompt": "依壁細胞圖排列製造鹽酸的路徑。",
+          "prompt": "排列壁細胞製造鹽酸的路徑。",
           "items": [
             {
               "id": "o1",
@@ -39,7 +39,7 @@ window.MECHANISM_LESSON_DATA = {
           "fullId": "stomach-level-4-3",
           "level": 2,
           "mode": "multi",
-          "prompt": "複選：哪些物質會促進圖中的壁細胞泌酸？",
+          "prompt": "複選：哪些物質會促進壁細胞泌酸？",
           "options": [
             {
               "id": "q3-a",
