@@ -204,7 +204,8 @@ window.GastricAcidMarkup = `
       <button id="prev" type="button" disabled>上一題</button>
       <button id="next" type="button">下一題</button>
     </nav>
-    <button id="start-quiz" class="back primary" type="button" hidden>開始看圖題</button>
+    <p id="recall-gate" class="recall-gate" role="status"></p>
+    <button id="start-quiz" class="back primary" type="button" disabled>開始看圖題</button>
     <button id="back-to-lesson" class="back" type="button">回到四步圖解</button>
   </section>
   <section id="acid-quiz" aria-label="看圖練習" hidden>

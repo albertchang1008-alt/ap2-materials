@@ -118,3 +118,7 @@
 .acid-level .completion { min-height: 50vh; display: grid; align-content: center; gap: 12px; }
 .acid-level .zoom-frame svg { font-family: inherit; }
 .acid-level .zoom-frame { max-height: 65dvh; }
+
+/* 回想卡門檻引導（2026-11-26）：鎖住時說明原因，黃框指出下一步 */
+.acid-level .recall-gate { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fffbeb; color: #92400e; font-weight: 700; }
+.acid-level .gate-target { outline: 3px solid #f59e0b; outline-offset: 2px; box-shadow: 0 0 0 6px rgba(245, 158, 11, .25); }

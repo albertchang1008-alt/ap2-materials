@@ -74,6 +74,52 @@
         };
         new MutationObserver(badges).observe(svg, { childList: true });
         badges();
+        // 進下一步的按鈕鎖住時，寫出原因並用黃框指出下一個要按的（2026-11-26 教師：每一關都加提示）。
+        const gateStyle = document.createElement('style');
+        gateStyle.textContent = '.gate-hint{margin:8px 0;padding:8px 10px;border-radius:6px;background:#fffbeb;color:#92400e;font-weight:700}' +
+          '.gate-target{outline:3px solid #f59e0b !important;outline-offset:2px;box-shadow:0 0 0 6px rgba(245,158,11,.25)}' +
+          '[data-nav-label].gate-target rect{stroke:#f59e0b;stroke-width:5}';
+        document.head.append(gateStyle);
+        let gateQueued = false;
+        const gateGuide = () => {
+          gateQueued = false;
+          const start = root.querySelector('#start-find');
+          const marked = root.querySelectorAll('.gate-target');
+          const oldHint = root.querySelector('.gate-hint');
+          let target = null, text = '';
+          if (app.s.phase === 'explore' && start && start.checkVisibility()) {
+            const label = start.textContent.trim();
+            const guideNext = root.querySelector('#guide-next');
+            if (!start.disabled) target = start;
+            else if (guideNext && guideNext.checkVisibility()) {
+              target = guideNext;
+              text = '按「下一處」看完導覽（或按「跳過」自己點名稱），才能按「' + label + '」。';
+            } else {
+              const ids = app.nodes().map(node => node.id);
+              const seen = ids.filter(id => app.s.seen.has(id)).length;
+              const pending = (app.guideNodes ? app.guideNodes() : ids).find(id => !app.s.seen.has(id));
+              if (pending) target = root.querySelector('[data-nav-label="' + pending + '"], [data-name-choice="' + pending + '"]');
+              text = '每個名稱都點開看過（已看 ' + seen + '／' + ids.length + '），才能按「' + label + '」。';
+            }
+          }
+          for (const el of marked) if (el !== target) el.classList.remove('gate-target');
+          if (target && !target.classList.contains('gate-target')) target.classList.add('gate-target');
+          if (!text) { oldHint?.remove(); return; }
+          const holder = start.closest('.actions') || start;
+          if (oldHint && oldHint.nextElementSibling === holder) {
+            if (oldHint.textContent !== text) oldHint.textContent = text;
+            return;
+          }
+          oldHint?.remove();
+          const hint = document.createElement('p');
+          hint.className = 'gate-hint';
+          hint.setAttribute('role', 'status');
+          hint.textContent = text;
+          holder.before(hint);
+        };
+        const queueGate = () => { if (!gateQueued) { gateQueued = true; requestAnimationFrame(gateGuide); } };
+        new MutationObserver(queueGate).observe(root, { childList: true, subtree: true });
+        queueGate();
         scale = n => app.scale(n, false);
       }
       port.onmessage = ({ data }) => {

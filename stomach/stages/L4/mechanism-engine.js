@@ -38,6 +38,7 @@
     const recalled = new Set();
     const visited = new Set();
     const beginQuiz = select('#start-quiz');
+    const recallGate = select('#recall-gate');
     const returnToQuiz = select('#back-to-quiz');
     const previous = select('#prev');
     const next = select('#next');
@@ -86,7 +87,21 @@
       cards[index].hidden = false;
       previous.disabled = index === 0;
       next.textContent = index === cards.length - 1 ? '回到第一題' : '下一題';
+      updateRecallGate();
       cards[index].querySelector('h2').focus();
+    }
+
+    // 看完每張白話解答才開放看圖題；鎖住時說明原因，並以黃框指出下一個該按的按鈕。
+    function updateRecallGate() {
+      const total = cards.length;
+      const ready = recalled.size === total;
+      beginQuiz.disabled = !ready;
+      recallGate.hidden = ready;
+      recallGate.textContent = ready ? '' : `每張都按「看白話解答」後，才能開始看圖題（已看 ${recalled.size}／${total}）。`;
+      for (const el of [...cards.map(card => card.querySelector('.flip')), next, beginQuiz]) el.classList.remove('gate-target');
+      if (ready) beginQuiz.classList.add('gate-target');
+      else if (!recalled.has(currentRecall)) cards[currentRecall].querySelector('.flip').classList.add('gate-target');
+      else next.classList.add('gate-target');
     }
 
     stepButtons.forEach((button, index) => listen(button, 'click', () => showStep(index)));
@@ -98,6 +113,7 @@
       }
       events?.endExplore?.();
       display(recall);
+      updateRecallGate();
       select('#recall-title').focus();
     });
     listen(select('#back-to-lesson'), 'click', () => {
@@ -105,7 +121,11 @@
       showStep(currentStep, true);
     });
     listen(previous, 'click', () => showRecall(currentRecall - 1));
-    listen(next, 'click', () => showRecall((currentRecall + 1) % cards.length));
+    listen(next, 'click', () => {
+      // 還有沒看過解答的卡片時，直接跳到下一張未看的。
+      const pending = cards.map((_, i) => (currentRecall + 1 + i) % cards.length).find(i => !recalled.has(i));
+      showRecall(pending ?? (currentRecall + 1) % cards.length);
+    });
 
     for (const [index, card] of cards.entries()) {
       const flip = card.querySelector('.flip');
@@ -115,7 +135,7 @@
         flip.setAttribute('aria-expanded', String(!reply.hidden));
         flip.textContent = reply.hidden ? '看白話解答' : '收起白話解答';
         if (!reply.hidden) recalled.add(index);
-        beginQuiz.hidden = recalled.size !== cards.length;
+        updateRecallGate();
       });
     }
 
